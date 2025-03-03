@@ -17,6 +17,8 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
   const [defaultTags, setDefaultTags] = useState([]);
   const [showDefaultTagSelector, setShowDefaultTagSelector] = useState(false);
   const [authError, setAuthError] = useState(false);
+  const [pollingInterval, setPollingInterval] = useState(5000); // デフォルトは5秒
+  const [rateLimitError, setRateLimitError] = useState(false);
 
   // ローカルストレージからデフォルトタグを読み込む
   useEffect(() => {
@@ -54,7 +56,16 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
 
     const fetchCurrentTrack = async () => {
       try {
+        // レート制限エラーが発生している場合は、メッセージを表示して処理をスキップ
+        if (rateLimitError) {
+          return;
+        }
+
         const response = await spotifyApi.getMyCurrentPlayingTrack();
+        
+        // エラーが表示されていた場合はクリア
+        setMessage('');
+        setRateLimitError(false);
         
         if (response && response.item) {
           // 新しい曲が検出されたらメッセージをリセット
@@ -74,6 +85,11 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
             setPreviousTrackId(response.item.id);
             await addDefaultTags(response.item);
           }
+          
+          // 正常に取得できたらポーリング間隔を通常に戻す
+          if (pollingInterval > 5000) {
+            setPollingInterval(5000);
+          }
         } else {
           // 再生中の曲がない場合はリセット
           setProgress(0);
@@ -87,16 +103,40 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
         if (error.status === 401) {
           setAuthError(true);
           setMessage('Spotifyの認証が切れました。再ログインが必要です。');
-        } else {
-          setMessage('曲の取得中にエラーが発生しました。');
+        } 
+        // 429エラー（Rate Limit）の場合はポーリング間隔を長くする
+        else if (error.status === 429) {
+          setRateLimitError(true);
+          setMessage('Spotify APIのレート制限に達しました。しばらくお待ちください...');
+          
+          // ポーリング間隔を長くする（最大2分）
+          setPollingInterval(Math.min(pollingInterval * 2, 120000));
+          
+          // 30秒後にレート制限エラーをリセット
+          setTimeout(() => {
+            setRateLimitError(false);
+            setMessage('');
+          }, 30000);
+        } 
+        // 404エラー（Not Found）の場合は曲が再生されていないことを示す
+        else if (error.status === 404) {
+          setMessage('現在Spotifyで曲が再生されていません。Spotifyアプリで曲を再生してください。');
+        }
+        // 403エラー（Forbidden）の場合はアクセス権限がないことを示す
+        else if (error.status === 403) {
+          setMessage('Spotifyへのアクセス権限がありません。再ログインするか、Spotifyアプリで曲を再生してください。');
+        }
+        else {
+          console.error('Detailed error:', error);
+          setMessage(`曲の取得中にエラーが発生しました (${error.status || 'Unknown'}): ${error.message || '不明なエラー'}`);
         }
       }
     };
 
     fetchCurrentTrack();
-    const interval = setInterval(fetchCurrentTrack, 5000);
+    const interval = setInterval(fetchCurrentTrack, pollingInterval);
     return () => clearInterval(interval);
-  }, [spotifyApi, previousTrackId, supabaseUserId, currentTrack]);
+  }, [spotifyApi, previousTrackId, supabaseUserId, currentTrack, pollingInterval, rateLimitError]);
 
   // 再生位置を更新するロジック
   useEffect(() => {
@@ -206,6 +246,23 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
     console.log('User IDs - Supabase:', supabaseUserId, 'Spotify:', spotifyUserId);
     
     try {
+      // 同じタグが既に存在するか確認
+      const { data: existingTags, error: checkError } = await supabase
+        .from('tagged_tracks')
+        .select('*')
+        .eq('track_id', track.id)
+        .eq('tag', tag)
+        .eq('user_id', supabaseUserId);
+      
+      if (checkError) throw checkError;
+      
+      // 既に同じタグが存在する場合は追加しない
+      if (existingTags && existingTags.length > 0) {
+        console.log('Tag already exists, skipping:', tag);
+        return;
+      }
+      
+      // 新しいタグを追加
       const { data, error } = await supabase
         .from('tagged_tracks')
         .insert([
@@ -230,6 +287,36 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
       console.log('Tag saved successfully:', data);
     } catch (error) {
       console.error('Error in saveTag:', error);
+      throw error;
+    }
+  };
+
+  // タグをデータベースから削除
+  const removeTag = async (track, tag) => {
+    console.log('Removing tag:', tag, 'from track:', track.name);
+    
+    try {
+      const { error } = await supabase
+        .from('tagged_tracks')
+        .delete()
+        .match({
+          track_id: track.id,
+          tag: tag,
+          user_id: supabaseUserId
+        });
+
+      if (error) {
+        console.error('Error details:', error);
+        throw error;
+      }
+      
+      console.log('Tag removed successfully');
+      // タグリストから削除したタグを除外
+      setTags(tags.filter(t => t !== tag));
+      setMessage(`タグ "${tag}" が削除されました。`);
+    } catch (error) {
+      console.error('Error in removeTag:', error);
+      setMessage('タグの削除中にエラーが発生しました。');
       throw error;
     }
   };
@@ -393,7 +480,7 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
     <div className={`now-playing-container ${isSidebar ? 'sidebar-mode' : ''}`}>
       <h2>再生中の曲</h2>
       
-      {message && <div className="message">{message}</div>}
+      {message && <div className={`message ${rateLimitError ? 'rate-limit-error' : ''}`}>{message}</div>}
       
       {authError ? (
         <div className="auth-error">
@@ -474,7 +561,19 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
                 <h4>タグ:</h4>
                 <div className="sidebar-tags-list">
                   {tags.map((tag, index) => (
-                    <span key={index} className="tag">{tag}</span>
+                    <span key={index} className="tag">
+                      {tag}
+                      <button 
+                        className="remove-tag-button"
+                        onClick={(e) => {
+                          e.stopPropagation(); // イベントの伝播を停止
+                          removeTag(currentTrack, tag);
+                        }}
+                        title="タグを削除"
+                      >
+                        ×
+                      </button>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -662,7 +761,19 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
                   <h4>タグ:</h4>
                   <div className="tags-list">
                     {tags.map((tag, index) => (
-                      <span key={index} className="tag">{tag}</span>
+                      <span key={index} className="tag">
+                        {tag}
+                        <button 
+                          className="remove-tag-button"
+                          onClick={(e) => {
+                            e.stopPropagation(); // イベントの伝播を停止
+                            removeTag(currentTrack, tag);
+                          }}
+                          title="タグを削除"
+                        >
+                          ×
+                        </button>
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -705,7 +816,17 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
           )}
         </div>
       ) : (
-        <p>現在再生中の曲はありません。Spotifyで曲を再生してください。</p>
+        <div className="no-track-message">
+          <p>現在再生中の曲はありません。Spotifyで曲を再生してください。</p>
+          <div className="spotify-instructions">
+            <p>以下の手順に従ってください：</p>
+            <ol>
+              <li>Spotifyアプリを開いて曲を再生します</li>
+              <li>曲が再生されると、ここに曲の情報が表示されます</li>
+              <li>Spotify Premiumアカウントをお持ちの場合は、アプリ内から直接曲を再生できます</li>
+            </ol>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId }) {
+function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isLoggedIn }) {
   const navigate = useNavigate();
   const [tracks, setTracks] = useState([]);
   const [filteredTracks, setFilteredTracks] = useState([]);
@@ -11,15 +11,20 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [playingTrackId, setPlayingTrackId] = useState(null);
+  const [tagSearchText, setTagSearchText] = useState('');
+  const [showAllTags, setShowAllTags] = useState(false);
+  const [filteredTagList, setFilteredTagList] = useState([]);
+  const [compactView, setCompactView] = useState(false);
 
   // すべてのタグ付けされた曲を取得
   useEffect(() => {
-    if (!supabaseUserId) return;
+    if (!supabaseUserId || !isLoggedIn) return;
 
     const fetchTaggedTracks = async () => {
       setLoading(true);
       try {
         // タグ付けされた曲を取得（ユーザーIDまたはSpotifyユーザーIDで検索）
+        // 重複を避けるために、track_id, tag, user_idの組み合わせでユニークになるようにする
         let query = supabase
           .from('tagged_tracks')
           .select('*')
@@ -39,14 +44,21 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId }) {
 
         console.log('Fetched tracks:', data);
         
-        // 曲ごとにグループ化
+        // 曲ごとにグループ化し、重複を排除
         const trackMap = new Map();
         const tagCountsObj = {};
+        const processedTags = new Set(); // 処理済みのtrack_id+tagの組み合わせを記録
 
         if (data && data.length > 0) {
           data.forEach(item => {
-            // タグの使用回数をカウント
-            tagCountsObj[item.tag] = (tagCountsObj[item.tag] || 0) + 1;
+            const trackTagKey = `${item.track_id}-${item.tag}`;
+            
+            // 同じ曲の同じタグは一度だけカウント
+            if (!processedTags.has(trackTagKey)) {
+              processedTags.add(trackTagKey);
+              // タグの使用回数をカウント
+              tagCountsObj[item.tag] = (tagCountsObj[item.tag] || 0) + 1;
+            }
             
             if (!trackMap.has(item.track_id)) {
               trackMap.set(item.track_id, {
@@ -99,6 +111,20 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId }) {
       }
     });
   };
+
+  // タグ検索テキストが変更されたときにタグリストをフィルタリング
+  useEffect(() => {
+    if (tagSearchText.trim() === '') {
+      setFilteredTagList(allTags);
+    } else {
+      const searchLower = tagSearchText.toLowerCase().trim();
+      const filtered = allTags.filter(tag => 
+        tag.toLowerCase().includes(searchLower)
+      );
+      setFilteredTagList(filtered);
+      setShowAllTags(true); // 検索時は全てのタグを表示
+    }
+  }, [tagSearchText, allTags]);
 
   // 選択されたタグに基づいて曲をフィルタリング
   useEffect(() => {
@@ -158,8 +184,19 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId }) {
       <div className="filter-section">
         <h3>タグで絞り込む</h3>
         <p className="tags-filter-help">タグは使用頻度順に表示されています。</p>
+        
+        <div className="tag-search-container">
+          <input
+            type="text"
+            className="tag-search-input"
+            placeholder="タグを検索..."
+            value={tagSearchText}
+            onChange={(e) => setTagSearchText(e.target.value)}
+          />
+        </div>
+        
         <div className="tags-filter">
-          {allTags.map(tag => (
+          {(showAllTags ? filteredTagList : filteredTagList.slice(0, 20)).map(tag => (
             <button
               key={tag}
               className={`tag-filter ${selectedTags.includes(tag) ? 'selected' : ''}`}
@@ -170,6 +207,25 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId }) {
             </button>
           ))}
         </div>
+        
+        {filteredTagList.length > 20 && !showAllTags && (
+          <button 
+            className="show-more-tags"
+            onClick={() => setShowAllTags(true)}
+          >
+            もっと見る ({filteredTagList.length - 20} タグ)
+          </button>
+        )}
+        
+        {showAllTags && tagSearchText === '' && (
+          <button 
+            className="show-less-tags"
+            onClick={() => setShowAllTags(false)}
+          >
+            表示を減らす
+          </button>
+        )}
+        
         {selectedTags.length > 0 && (
           <button 
             className="clear-filters"
@@ -180,34 +236,66 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId }) {
         )}
       </div>
       
-      <div className="tracks-count">
-        {filteredTracks.length} 曲が見つかりました
+      <div className="tracks-count-container">
+        <div className="tracks-count">
+          {filteredTracks.length} 曲が見つかりました
+        </div>
+        <button 
+          className={`view-toggle-button ${compactView ? 'compact-active' : ''}`}
+          onClick={() => setCompactView(!compactView)}
+        >
+          {compactView ? '詳細表示' : 'シンプル表示'}
+        </button>
       </div>
       
       {loading ? (
         <div className="loading">読み込み中...</div>
       ) : (
-        <div className="tracks-list">
+        <div className={`tracks-list ${compactView ? 'compact-view' : ''}`}>
           {filteredTracks.length > 0 ? (
             filteredTracks.map(track => (
               <div key={track.id} className="track-card">
-                <div className="track-image">
-                  {track.image ? (
-                    <img src={track.image} alt={`${track.album} album cover`} />
-                  ) : (
-                    <div className="no-image">No Image</div>
-                  )}
-                  <div 
-                    className={`play-button ${playingTrackId === track.id ? 'playing' : ''}`}
-                    onClick={() => playTrack(track.id)}
-                  >
-                    {playingTrackId === track.id ? '■' : '▶'}
+                {!compactView && (
+                  <div className="track-image">
+                    {track.image ? (
+                      <img src={track.image} alt={`${track.album} album cover`} />
+                    ) : (
+                      <div className="no-image">No Image</div>
+                    )}
+                    <div 
+                      className={`play-button ${playingTrackId === track.id ? 'playing' : ''}`}
+                      onClick={() => playTrack(track.id)}
+                    >
+                      {playingTrackId === track.id ? '■' : '▶'}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="track-info">
-                  <h4>{track.name}</h4>
-                  <p className="artist">{track.artist}</p>
-                  <p className="album">{track.album}</p>
+                  {compactView && track.image && (
+                    <div className="compact-album-cover">
+                      <img src={track.image} alt={`${track.album} album cover`} />
+                    </div>
+                  )}
+                  <div className="track-title-container">
+                    <h4>{track.name}</h4>
+                    {compactView && (
+                      <div 
+                        className={`compact-play-button ${playingTrackId === track.id ? 'playing' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation(); // クリックイベントの伝播を停止
+                          playTrack(track.id);
+                        }}
+                      >
+                        {playingTrackId === track.id ? '■' : '▶'}
+                      </div>
+                    )}
+                  </div>
+                  {!compactView && (
+                    <>
+                      <p className="artist">{track.artist}</p>
+                      <p className="album">{track.album}</p>
+                    </>
+                  )}
                   <div className="track-tags">
                     {track.tags.map((tag, index) => (
                       <span key={index} className="tag">{tag}</span>

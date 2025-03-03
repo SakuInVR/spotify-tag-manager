@@ -135,10 +135,81 @@ button:disabled {
   color: #aaa;
 }
 
+.auth-instructions {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: var(--card-background);
+  border-radius: 10px;
+  text-align: left;
+}
+
+.auth-instructions p {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+
+.auth-instructions ol {
+  padding-left: 1.5rem;
+}
+
+.auth-instructions li {
+  margin-bottom: 0.5rem;
+  color: #ddd;
+}
+
+.no-track-message {
+  padding: 1.5rem;
+  background-color: var(--card-background);
+  border-radius: 10px;
+  margin-top: 1rem;
+}
+
+.spotify-instructions {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.spotify-instructions p {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.spotify-instructions ol {
+  padding-left: 1.5rem;
+}
+
+.spotify-instructions li {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
 /* ホームページスタイル */
 .home-container {
   text-align: center;
   padding: 2rem 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.home-header {
+  margin-bottom: 3rem;
+}
+
+.home-header h1 {
+  font-size: 2.5rem;
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+}
+
+.home-description {
+  font-size: 1.2rem;
+  color: #aaa;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .features {
@@ -153,28 +224,53 @@ button:disabled {
   border-radius: 10px;
   padding: 2rem;
   flex: 1;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .feature:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
 }
 
 .feature h3 {
   color: var(--primary-color);
   margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.feature p {
+  margin-bottom: 1.5rem;
+  color: #ddd;
+  line-height: 1.6;
 }
 
 .feature-link {
   display: inline-block;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 50px;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .feature-link:hover {
-  text-decoration: underline;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.home-footer {
+  margin-top: 4rem;
+  color: #aaa;
+  font-style: italic;
 }
 
 /* 再生中の曲スタイル */
@@ -414,6 +510,27 @@ button:disabled {
   padding: 0.3rem 0.8rem;
   border-radius: 50px;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.remove-tag-button {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  padding: 0 0 0 0.3rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.remove-tag-button:hover {
+  opacity: 1;
+  background: none;
 }
 
 .add-tag-container {
@@ -621,6 +738,10 @@ button:disabled {
   margin: 1rem 0;
 }
 
+.message.rate-limit-error {
+  background-color: #F39C12; /* オレンジ色 - 警告色 */
+}
+
 .error-message {
   background-color: var(--error-color);
   color: white;
@@ -671,11 +792,38 @@ button:disabled {
   border-radius: 10px;
 }
 
+.tag-search-container {
+  margin-bottom: 1rem;
+}
+
+.tag-search-input {
+  width: 100%;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
 .tags-filter {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1rem;
+}
+
+.show-more-tags, .show-less-tags {
+  margin-top: 1rem;
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
+.show-more-tags:hover, .show-less-tags:hover {
+  background-color: var(--hover-color);
 }
 
 .tags-filter-help {
@@ -724,15 +872,124 @@ button:disabled {
   border: 1px solid var(--border-color);
 }
 
-.tracks-count {
+.tracks-count-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 1rem;
+}
+
+.tracks-count {
   color: #aaa;
+}
+
+.view-toggle-button {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 50px;
+}
+
+.view-toggle-button.compact-active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.selection-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .tracks-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+}
+
+.tracks-list.compact-view {
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+.compact-view .track-card {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  height: auto;
+  min-height: 40px;
+  margin-bottom: 0.2rem;
+}
+
+.compact-view .track-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0.2rem;
+  width: 100%;
+}
+
+.compact-album-cover {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.compact-album-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.track-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 40%;
+  min-width: 200px;
+}
+
+.compact-play-button {
+  width: 30px;
+  height: 30px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s, transform 0.2s;
+  margin-left: 0.5rem;
+}
+
+.compact-play-button:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.compact-play-button.playing {
+  background-color: var(--error-color);
+}
+
+.compact-view .track-tags {
+  margin: 0 0 0 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.compact-view .tag {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.4rem;
+  margin: 0.1rem;
 }
 
 .track-card {
@@ -880,6 +1137,16 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.compact-view .selection-indicator {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 20px;
+  height: 20px;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
 }
 
 .track-card {

@@ -70,44 +70,76 @@ function App() {
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
-      const token = hash.substring(1).split('&').find(elem => elem.startsWith('access_token')).split('=')[1];
-      spotifyApi.setAccessToken(token);
-      setIsLoggedIn(true);
-      window.location.hash = '';
-      
-      // ユーザーIDを取得
-      spotifyApi.getMe().then(user => {
-        setSpotifyUserId(user.id);
-        localStorage.setItem('spotify_user_id', user.id);
-        localStorage.setItem('spotify_access_token', token);
+      try {
+        const token = hash.substring(1).split('&').find(elem => elem.startsWith('access_token')).split('=')[1];
+        const expiresIn = hash.substring(1).split('&').find(elem => elem.startsWith('expires_in')).split('=')[1];
         
-        // Spotifyユーザー情報をSupabaseに保存
-        if (supabaseUserId) {
-          supabase
-            .from('spotify_users')
-            .upsert([
-              {
-                supabase_user_id: supabaseUserId,
-                spotify_user_id: user.id,
-                display_name: user.display_name,
-                email: user.email,
-                last_login: new Date().toISOString()
-              }
-            ])
-            .then(({ error }) => {
-              if (error) console.error('Error saving Spotify user info:', error);
-            });
-        }
-      });
+        // トークンの有効期限をタイムスタンプとして保存
+        const expirationTime = Date.now() + parseInt(expiresIn) * 1000;
+        localStorage.setItem('spotify_token_expiration', expirationTime.toString());
+        
+        spotifyApi.setAccessToken(token);
+        setIsLoggedIn(true);
+        window.location.hash = '';
+        
+        // ユーザーIDを取得
+        spotifyApi.getMe().then(user => {
+          setSpotifyUserId(user.id);
+          localStorage.setItem('spotify_user_id', user.id);
+          localStorage.setItem('spotify_access_token', token);
+          
+          // Spotifyユーザー情報をSupabaseに保存
+          if (supabaseUserId) {
+            supabase
+              .from('spotify_users')
+              .upsert([
+                {
+                  supabase_user_id: supabaseUserId,
+                  spotify_user_id: user.id,
+                  display_name: user.display_name,
+                  email: user.email,
+                  last_login: new Date().toISOString()
+                }
+              ])
+              .then(({ error }) => {
+                if (error) console.error('Error saving Spotify user info:', error);
+              });
+          }
+        }).catch(error => {
+          console.error('Error getting user profile:', error);
+          // トークンが無効な場合は再認証
+          localStorage.removeItem('spotify_access_token');
+          setIsLoggedIn(false);
+        });
+      } catch (error) {
+        console.error('Error parsing hash parameters:', error);
+      }
     } else {
       // ローカルストレージからトークンを復元
       const token = localStorage.getItem('spotify_access_token');
       const storedSpotifyUserId = localStorage.getItem('spotify_user_id');
+      const tokenExpiration = localStorage.getItem('spotify_token_expiration');
       
       if (token) {
-        spotifyApi.setAccessToken(token);
-        setIsLoggedIn(true);
-        setSpotifyUserId(storedSpotifyUserId);
+        // トークンの有効期限をチェック
+        if (tokenExpiration && parseInt(tokenExpiration) > Date.now()) {
+          spotifyApi.setAccessToken(token);
+          setIsLoggedIn(true);
+          setSpotifyUserId(storedSpotifyUserId);
+          
+          // トークンの有効性を確認
+          spotifyApi.getMe().catch(error => {
+            console.error('Error validating token:', error);
+            // トークンが無効な場合は再認証
+            localStorage.removeItem('spotify_access_token');
+            setIsLoggedIn(false);
+          });
+        } else {
+          // トークンの有効期限が切れている場合は再認証
+          console.log('Token expired, please login again');
+          localStorage.removeItem('spotify_access_token');
+          setIsLoggedIn(false);
+        }
       }
     }
   }, [supabaseUserId]);
@@ -148,12 +180,23 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route 
+                  path="/now-playing" 
+                  element={<NowPlaying 
+                    spotifyApi={spotifyApi} 
+                    supabase={supabase} 
+                    spotifyUserId={spotifyUserId}
+                    supabaseUserId={supabaseUserId}
+                    isSidebar={false}
+                  />} 
+                />
+                <Route 
                   path="/tagged-tracks" 
                   element={<TaggedTracks 
                     spotifyApi={spotifyApi}
                     supabase={supabase} 
                     spotifyUserId={spotifyUserId}
-                    supabaseUserId={supabaseUserId} 
+                    supabaseUserId={supabaseUserId}
+                    isLoggedIn={isLoggedIn}
                   />} 
                 />
                 <Route 
@@ -162,7 +205,8 @@ function App() {
                     spotifyApi={spotifyApi} 
                     supabase={supabase} 
                     spotifyUserId={spotifyUserId}
-                    supabaseUserId={supabaseUserId} 
+                    supabaseUserId={supabaseUserId}
+                    isLoggedIn={isLoggedIn}
                   />} 
                 />
               </Routes>
@@ -170,6 +214,15 @@ function App() {
               <div className="welcome-message">
                 <h2>Welcome to Spotify Tag Manager</h2>
                 <p>Log in with your Spotify account to start tagging your music.</p>
+                <div className="auth-instructions">
+                  <p>このアプリを使用するには、以下の手順に従ってください：</p>
+                  <ol>
+                    <li>「Login with Spotify」ボタンをクリックしてSpotifyアカウントでログインします</li>
+                    <li>アプリへのアクセス許可を承認します</li>
+                    <li>ログイン後、Spotifyで曲を再生すると、タグ付けができるようになります</li>
+                    <li>Spotify Premiumアカウントをお持ちの場合は、アプリ内から直接曲を再生できます</li>
+                  </ol>
+                </div>
               </div>
             )}
           </main>

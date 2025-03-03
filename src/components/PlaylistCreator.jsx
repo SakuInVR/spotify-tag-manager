@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }) {
+function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isLoggedIn }) {
   const [tracks, setTracks] = useState([]);
   const [filteredTracks, setFilteredTracks] = useState([]);
   const [allTags, setAllTags] = useState([]);
@@ -12,10 +12,14 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
+  const [tagSearchText, setTagSearchText] = useState('');
+  const [showAllTags, setShowAllTags] = useState(false);
+  const [filteredTagList, setFilteredTagList] = useState([]);
+  const [compactView, setCompactView] = useState(false);
 
   // すべてのタグ付けされた曲を取得
   useEffect(() => {
-    if (!supabaseUserId) return;
+    if (!supabaseUserId || !isLoggedIn) return;
 
     const fetchTaggedTracks = async () => {
       setLoading(true);
@@ -40,30 +44,37 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
 
         console.log('Fetched tracks for playlist:', data);
         
-        // 曲ごとにグループ化
+        // 曲ごとにグループ化し、重複を排除
         const trackMap = new Map();
         const tagSet = new Set();
+        const processedTags = new Set(); // 処理済みのtrack_id+tagの組み合わせを記録
 
         if (data && data.length > 0) {
           data.forEach(item => {
-          tagSet.add(item.tag);
-          
-          if (!trackMap.has(item.track_id)) {
-            trackMap.set(item.track_id, {
-              id: item.track_id,
-              name: item.track_name,
-              artist: item.artist_name,
-              album: item.album_name,
-              image: item.album_image,
-              tags: [item.tag],
-              added_at: item.added_at
-            });
-          } else {
-            const track = trackMap.get(item.track_id);
-            if (!track.tags.includes(item.tag)) {
-              track.tags.push(item.tag);
+            const trackTagKey = `${item.track_id}-${item.tag}`;
+            
+            // 同じ曲の同じタグは一度だけ処理
+            if (!processedTags.has(trackTagKey)) {
+              processedTags.add(trackTagKey);
+              tagSet.add(item.tag);
             }
-          }
+            
+            if (!trackMap.has(item.track_id)) {
+              trackMap.set(item.track_id, {
+                id: item.track_id,
+                name: item.track_name,
+                artist: item.artist_name,
+                album: item.album_name,
+                image: item.album_image,
+                tags: [item.tag],
+                added_at: item.added_at
+              });
+            } else {
+              const track = trackMap.get(item.track_id);
+              if (!track.tags.includes(item.tag)) {
+                track.tags.push(item.tag);
+              }
+            }
           });
         }
 
@@ -93,6 +104,20 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
       }
     });
   };
+
+  // タグ検索テキストが変更されたときにタグリストをフィルタリング
+  useEffect(() => {
+    if (tagSearchText.trim() === '') {
+      setFilteredTagList(allTags);
+    } else {
+      const searchLower = tagSearchText.toLowerCase().trim();
+      const filtered = allTags.filter(tag => 
+        tag.toLowerCase().includes(searchLower)
+      );
+      setFilteredTagList(filtered);
+      setShowAllTags(true); // 検索時は全てのタグを表示
+    }
+  }, [tagSearchText, allTags]);
 
   // 選択されたタグに基づいて曲をフィルタリング
   useEffect(() => {
@@ -178,8 +203,20 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
       
       <div className="filter-section">
         <h3>タグで絞り込む</h3>
+        
+        <div className="tag-search-container">
+          <input
+            type="text"
+            className="tag-search-input"
+            placeholder="タグを検索..."
+            value={tagSearchText}
+            onChange={(e) => setTagSearchText(e.target.value)}
+            disabled={creating}
+          />
+        </div>
+        
         <div className="tags-filter">
-          {allTags.map(tag => (
+          {(showAllTags ? filteredTagList : filteredTagList.slice(0, 20)).map(tag => (
             <button
               key={tag}
               className={`tag-filter ${selectedTags.includes(tag) ? 'selected' : ''}`}
@@ -190,6 +227,27 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
             </button>
           ))}
         </div>
+        
+        {filteredTagList.length > 20 && !showAllTags && (
+          <button 
+            className="show-more-tags"
+            onClick={() => setShowAllTags(true)}
+            disabled={creating}
+          >
+            もっと見る ({filteredTagList.length - 20} タグ)
+          </button>
+        )}
+        
+        {showAllTags && tagSearchText === '' && (
+          <button 
+            className="show-less-tags"
+            onClick={() => setShowAllTags(false)}
+            disabled={creating}
+          >
+            表示を減らす
+          </button>
+        )}
+        
         {selectedTags.length > 0 && (
           <button 
             className="clear-filters"
@@ -228,7 +286,16 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
       
       <div className="tracks-selection">
         <div className="selection-header">
-          <h3>曲を選択 ({selectedTrackIds.length}/{filteredTracks.length})</h3>
+          <div className="selection-header-left">
+            <h3>曲を選択 ({selectedTrackIds.length}/{filteredTracks.length})</h3>
+            <button 
+              className={`view-toggle-button ${compactView ? 'compact-active' : ''}`}
+              onClick={() => setCompactView(!compactView)}
+              disabled={creating}
+            >
+              {compactView ? '詳細表示' : 'シンプル表示'}
+            </button>
+          </div>
           <button 
             className="select-all"
             onClick={toggleSelectAll}
@@ -241,7 +308,7 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
         {loading ? (
           <div className="loading">読み込み中...</div>
         ) : (
-          <div className="tracks-list">
+          <div className={`tracks-list ${compactView ? 'compact-view' : ''}`}>
             {filteredTracks.length > 0 ? (
               filteredTracks.map(track => (
                 <div 
@@ -249,26 +316,41 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId }
                   className={`track-card ${selectedTrackIds.includes(track.id) ? 'selected' : ''}`}
                   onClick={() => toggleTrackSelection(track.id)}
                 >
-                  <div className="track-image">
-                    {track.image ? (
-                      <img src={track.image} alt={`${track.album} album cover`} />
-                    ) : (
-                      <div className="no-image">No Image</div>
-                    )}
-                  </div>
+                  {!compactView && (
+                    <div className="track-image">
+                      {track.image ? (
+                        <img src={track.image} alt={`${track.album} album cover`} />
+                      ) : (
+                        <div className="no-image">No Image</div>
+                      )}
+                    </div>
+                  )}
                   <div className="track-info">
-                    <h4>{track.name}</h4>
-                    <p className="artist">{track.artist}</p>
-                    <p className="album">{track.album}</p>
+                    {compactView && track.image && (
+                      <div className="compact-album-cover">
+                        <img src={track.image} alt={`${track.album} album cover`} />
+                      </div>
+                    )}
+                    <div className="track-title-container">
+                      <h4>{track.name}</h4>
+                    </div>
+                    {!compactView && (
+                      <>
+                        <p className="artist">{track.artist}</p>
+                        <p className="album">{track.album}</p>
+                      </>
+                    )}
                     <div className="track-tags">
                       {track.tags.map((tag, index) => (
                         <span key={index} className="tag">{tag}</span>
                       ))}
                     </div>
                   </div>
-                  <div className="selection-indicator">
-                    {selectedTrackIds.includes(track.id) && <span>✓</span>}
-                  </div>
+                  {selectedTrackIds.includes(track.id) && (
+                    <div className="selection-indicator">
+                      <span>✓</span>
+                    </div>
+                  )}
                 </div>
               ))
             ) : (
