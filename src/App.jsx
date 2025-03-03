@@ -84,6 +84,7 @@ function App() {
         
         // ユーザーIDを取得
         spotifyApi.getMe().then(user => {
+          console.log('Logged in user:', user);
           setSpotifyUserId(user.id);
           localStorage.setItem('spotify_user_id', user.id);
           localStorage.setItem('spotify_access_token', token);
@@ -102,17 +103,25 @@ function App() {
                 }
               ])
               .then(({ error }) => {
-                if (error) console.error('Error saving Spotify user info:', error);
+                if (error) {
+                  console.error('Error saving Spotify user info:', error);
+                } else {
+                  console.log('Successfully saved user info to Supabase');
+                }
               });
           }
         }).catch(error => {
           console.error('Error getting user profile:', error);
           // トークンが無効な場合は再認証
           localStorage.removeItem('spotify_access_token');
+          localStorage.removeItem('spotify_token_expiration');
+          localStorage.removeItem('spotify_user_id');
           setIsLoggedIn(false);
+          alert('Spotifyの認証に失敗しました。再度ログインしてください。');
         });
       } catch (error) {
         console.error('Error parsing hash parameters:', error);
+        alert('認証情報の解析に失敗しました。再度ログインしてください。');
       }
     } else {
       // ローカルストレージからトークンを復元
@@ -128,17 +137,31 @@ function App() {
           setSpotifyUserId(storedSpotifyUserId);
           
           // トークンの有効性を確認
-          spotifyApi.getMe().catch(error => {
+          spotifyApi.getMe().then(user => {
+            console.log('Validated user:', user);
+            // ユーザー情報が一致するか確認
+            if (user.id !== storedSpotifyUserId) {
+              console.warn('User ID mismatch, updating stored ID');
+              setSpotifyUserId(user.id);
+              localStorage.setItem('spotify_user_id', user.id);
+            }
+          }).catch(error => {
             console.error('Error validating token:', error);
             // トークンが無効な場合は再認証
             localStorage.removeItem('spotify_access_token');
+            localStorage.removeItem('spotify_token_expiration');
+            localStorage.removeItem('spotify_user_id');
             setIsLoggedIn(false);
+            alert('セッションの有効期限が切れました。再度ログインしてください。');
           });
         } else {
           // トークンの有効期限が切れている場合は再認証
           console.log('Token expired, please login again');
           localStorage.removeItem('spotify_access_token');
+          localStorage.removeItem('spotify_token_expiration');
+          localStorage.removeItem('spotify_user_id');
           setIsLoggedIn(false);
+          // 自動的に再ログインを促さない（ユーザーが意図的にログアウトした可能性もあるため）
         }
       }
     }
