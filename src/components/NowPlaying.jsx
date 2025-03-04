@@ -501,7 +501,7 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
         <div className="track-info">
           {/* サイドバーモードでは異なるレイアウト */}
           {isSidebar ? (
-            <>
+            <div className="sidebar-track-container">
               <div className="sidebar-track-header">
                 <div className="sidebar-album-cover">
                   {currentTrack.album.images[0] && (
@@ -701,7 +701,7 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
                   </div>
                 )}
               </div>
-            </>
+            </div>
           ) : (
             <>
               <div className="album-cover">

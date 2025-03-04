@@ -4,6 +4,7 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
   const [tracks, setTracks] = useState([]);
   const [filteredTracks, setFilteredTracks] = useState([]);
   const [allTags, setAllTags] = useState([]);
+  const [tagCounts, setTagCounts] = useState({}); // タグの使用回数を保存
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedTrackIds, setSelectedTrackIds] = useState([]);
   const [playlistName, setPlaylistName] = useState('');
@@ -15,7 +16,7 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
   const [tagSearchText, setTagSearchText] = useState('');
   const [showAllTags, setShowAllTags] = useState(false);
   const [filteredTagList, setFilteredTagList] = useState([]);
-  const [compactView, setCompactView] = useState(false);
+  const [compactView, setCompactView] = useState(true); // デフォルトでシンプル表示（true）に設定
 
   // すべてのタグ付けされた曲を取得
   useEffect(() => {
@@ -46,7 +47,7 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
         
         // 曲ごとにグループ化し、重複を排除
         const trackMap = new Map();
-        const tagSet = new Set();
+        const tagCountsObj = {}; // タグのカウント用オブジェクト
         const processedTags = new Set(); // 処理済みのtrack_id+tagの組み合わせを記録
 
         if (data && data.length > 0) {
@@ -56,7 +57,8 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
             // 同じ曲の同じタグは一度だけ処理
             if (!processedTags.has(trackTagKey)) {
               processedTags.add(trackTagKey);
-              tagSet.add(item.tag);
+              // タグの使用回数をカウント
+              tagCountsObj[item.tag] = (tagCountsObj[item.tag] || 0) + 1;
             }
             
             if (!trackMap.has(item.track_id)) {
@@ -78,11 +80,17 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
           });
         }
 
+        // タグを使用回数順にソート
+        const sortedTags = Object.keys(tagCountsObj).sort((a, b) => tagCountsObj[b] - tagCountsObj[a]);
+
         const uniqueTracks = Array.from(trackMap.values());
         console.log('Unique tracks for playlist:', uniqueTracks);
+        console.log('Tag counts:', tagCountsObj);
+        
         setTracks(uniqueTracks);
         setFilteredTracks(uniqueTracks);
-        setAllTags(Array.from(tagSet));
+        setAllTags(sortedTags);
+        setTagCounts(tagCountsObj);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching tagged tracks:', err);
@@ -92,7 +100,7 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
     };
 
     fetchTaggedTracks();
-  }, [supabase, supabaseUserId]);
+  }, [supabase, supabaseUserId, spotifyUserId]);
 
   // タグを選択/解除
   const toggleTag = (tag) => {
@@ -203,6 +211,7 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
       
       <div className="filter-section">
         <h3>タグで絞り込む</h3>
+        <p className="tags-filter-help">タグは使用頻度順に表示されています。</p>
         
         <div className="tag-search-container">
           <input
@@ -223,7 +232,8 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
               onClick={() => toggleTag(tag)}
               disabled={creating}
             >
-              {tag}
+              <span className="tag-filter-name">{tag}</span>
+              <span className="tag-filter-count">{tagCounts[tag]}回</span>
             </button>
           ))}
         </div>

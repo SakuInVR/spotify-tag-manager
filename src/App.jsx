@@ -66,6 +66,21 @@ function App() {
     window.location.href = `https://accounts.spotify.com/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token`;
   };
 
+  // ログアウト処理
+  const logout = () => {
+    // ローカルストレージからSpotify関連のデータを削除
+    localStorage.removeItem('spotify_access_token');
+    localStorage.removeItem('spotify_token_expiration');
+    localStorage.removeItem('spotify_user_id');
+    
+    // 状態をリセット
+    setIsLoggedIn(false);
+    setSpotifyUserId(null);
+    
+    // ホームページにリダイレクト
+    window.location.href = window.location.origin;
+  };
+
   // トークンの取得と設定
   useEffect(() => {
     const hash = window.location.hash;
@@ -180,6 +195,7 @@ function App() {
                 <li><Link to="/">Home</Link></li>
                 <li><Link to="/tagged-tracks">Tagged Tracks</Link></li>
                 <li><Link to="/create-playlist">Create Playlist</Link></li>
+                <li><button onClick={logout} className="logout-button">ログアウト</button></li>
               </ul>
             </nav>
           )}

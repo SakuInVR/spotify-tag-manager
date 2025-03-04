@@ -14,7 +14,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
   const [tagSearchText, setTagSearchText] = useState('');
   const [showAllTags, setShowAllTags] = useState(false);
   const [filteredTagList, setFilteredTagList] = useState([]);
-  const [compactView, setCompactView] = useState(false);
+  const [compactView, setCompactView] = useState(true); // デフォルトでシンプル表示（true）に設定
 
   // すべてのタグ付けされた曲を取得
   useEffect(() => {
