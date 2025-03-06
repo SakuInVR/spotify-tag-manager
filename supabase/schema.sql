@@ -37,34 +37,36 @@ CREATE INDEX IF NOT EXISTS idx_tagged_tracks_tag ON tagged_tracks (tag);
 -- RLSポリシーを設定（各ユーザーは自分のデータのみアクセス可能）
 ALTER TABLE tagged_tracks ENABLE ROW LEVEL SECURITY;
 
--- 開発環境ではRLSを無効にする（本番環境では有効にすることを推奨）
--- 以下のコメントを解除すると、RLSが有効になります
-
-/*
-CREATE POLICY "ユーザーは自分のタグ付けした曲のみ参照可能" 
+-- 開発環境での基本的なRLSポリシー
+CREATE POLICY "全ユーザーが参照可能" 
   ON tagged_tracks FOR SELECT 
-  USING (user_id = current_setting('request.jwt.claims')::json->>'sub');
+  TO authenticated, anon
+  USING (true);
 
-CREATE POLICY "ユーザーは自分の曲にのみタグ付け可能" 
+CREATE POLICY "全ユーザーが追加可能" 
   ON tagged_tracks FOR INSERT 
-  WITH CHECK (user_id = current_setting('request.jwt.claims')::json->>'sub');
+  TO authenticated, anon
+  WITH CHECK (true);
 
 CREATE POLICY "ユーザーは自分のタグのみ削除可能" 
   ON tagged_tracks FOR DELETE 
-  USING (user_id = current_setting('request.jwt.claims')::json->>'sub');
+  TO authenticated, anon
+  USING (true);
 
 -- Spotifyユーザーテーブルのポリシー
 ALTER TABLE spotify_users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "ユーザーは自分のSpotify情報のみ参照可能" 
+CREATE POLICY "全ユーザーがSpotify情報を参照可能" 
   ON spotify_users FOR SELECT 
-  USING (supabase_user_id = current_setting('request.jwt.claims')::json->>'sub');
+  TO authenticated, anon
+  USING (true);
 
-CREATE POLICY "ユーザーは自分のSpotify情報のみ更新可能" 
+CREATE POLICY "全ユーザーがSpotify情報を追加可能" 
   ON spotify_users FOR INSERT 
-  WITH CHECK (supabase_user_id = current_setting('request.jwt.claims')::json->>'sub');
+  TO authenticated, anon
+  WITH CHECK (true);
 
-CREATE POLICY "ユーザーは自分のSpotify情報のみ更新可能" 
+CREATE POLICY "全ユーザーがSpotify情報を更新可能" 
   ON spotify_users FOR UPDATE 
-  USING (supabase_user_id = current_setting('request.jwt.claims')::json->>'sub');
-*/
+  TO authenticated, anon
+  USING (true);
