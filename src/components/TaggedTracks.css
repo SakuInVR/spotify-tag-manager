@@ -1,0 +1,1004 @@
+/* TaggedTracks.css */
+
+.tagged-tracks {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.tagged-tracks h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #1DB954;
+}
+
+/* タグフィルター部分 */
+.tag-filter {
+  background-color: #282828;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.tag-filter h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.available-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-tag {
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-tag:hover {
+  background-color: #3a3a3a;
+}
+
+.filter-tag.selected {
+  background-color: #1DB954;
+  border-color: #1DB954;
+}
+
+/* 検索フィルター */
+.search-filter {
+  margin-bottom: 20px;
+}
+
+.search-filter input {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 20px;
+  border: none;
+  background-color: #333;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.search-filter input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.5);
+}
+
+/* メッセージ表示 */
+.success-message {
+  background-color: #1DB954;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  animation: fadeInOut 3s forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.error-message {
+  background-color: #e74c3c;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+/* ローディング表示 */
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* 曲なしメッセージ */
+.no-tracks-message {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #282828;
+  border-radius: 8px;
+  color: #999;
+}
+
+.no-tracks-message p {
+  margin: 10px 0;
+}
+
+/* トラック一覧 */
+.tracks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.track-item {
+  display: flex;
+  background-color: #282828;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.track-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.track-item.expanded {
+  margin-bottom: 10px;
+}
+
+.track-image {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.track-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.track-info {
+  flex-grow: 1;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.track-info h3 {
+  margin: 0;
+  margin-bottom: 5px;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.track-info .artist {
+  margin: 0 0 3px;
+  color: #1DB954;
+  font-size: 1rem;
+}
+
+.track-info .album {
+  margin: 0 0 10px;
+  color: #b3b3b3;
+  font-size: 0.9rem;
+}
+
+/* トラックタグのスタイル */
+.track-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tag {
+  background-color: #333;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tag:hover {
+  background-color: #444;
+}
+
+.tag.selected {
+  background-color: #1DB954;
+}
+
+.tag.deleting {
+  background-color: #e74c3c;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* タグ削除ボタン */
+.remove-tag-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-left: 5px;
+  padding: 0 2px;
+  transition: color 0.2s ease;
+}
+
+.remove-tag-button:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 削除確認UI */
+.delete-confirmation {
+  display: flex;
+  margin-left: 5px;
+  gap: 3px;
+}
+
+.confirm-delete,
+.cancel-delete {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.confirm-delete {
+  color: #98FB98;
+}
+
+.confirm-delete:hover {
+  color: white;
+}
+
+.cancel-delete {
+  color: #FFA07A;
+}
+
+.cancel-delete:hover {
+  color: white;
+}
+
+/* 再生ボタン */
+.play-button {
+  background: none;
+  border: none;
+  color: #1DB954;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 15px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.play-button:hover {
+  transform: scale(1.2);
+}
+
+/* タグ編集セクション */
+.tag-edit-section {
+  margin-top: 10px;
+}
+
+.toggle-tag-edit {
+  background-color: transparent;
+  border: 1px solid #555;
+  color: #b3b3b3;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-tag-edit:hover {
+  background-color: #3a3a3a;
+  color: #fff;
+}
+
+/* タグ追加フォーム */
+.add-tag-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-tag-form input {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: none;
+  background-color: #333;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.add-tag-form input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.5);
+}
+
+.add-tag-form button {
+  align-self: flex-start;
+  background-color: #1DB954;
+  border: none;
+  color: #fff;
+  padding: 5px 15px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-tag-form button:hover {
+  background-color: #1ed760;
+}
+
+.add-tag-form .suggested-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.add-tag-form .suggested-tag {
+  background-color: #333;
+  color: #ddd;
+  font-size: 0.8rem;
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.add-tag-form .suggested-tag:hover {
+  background-color: #444;
+  color: #fff;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+  .track-item {
+    flex-direction: column;
+  }
+  
+  .track-image {
+    width: 100%;
+    height: 200px;
+  }
+
+  .play-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 10px;
+  }
+}
+
+/* タグ付き曲一覧のメインコンテナ */
+.tagged-tracks-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.tagged-tracks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.tagged-tracks-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #1db954;
+}
+
+/* フィルターとソートのコントロール */
+.filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  background-color: rgba(30, 30, 30, 0.6);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-group h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #eee;
+}
+
+.search-bar {
+  display: flex;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 4px 0 0 4px;
+  font-size: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.search-bar button {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background-color: #1db954;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.search-bar button:hover {
+  background-color: #1ed760;
+}
+
+/* タグフィルターエリア */
+.tag-filter-area {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.filter-tag {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: #1db954;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-tag:hover {
+  background-color: #1ed760;
+  transform: translateY(-2px);
+}
+
+.filter-tag-remove {
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.filter-tag-remove:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.suggested-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.suggested-tag {
+  padding: 0.4rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.suggested-tag:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.suggested-tag-count {
+  font-size: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.2rem 0.4rem;
+  border-radius: 10px;
+}
+
+/* ソート設定エリア */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sort-select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.sort-select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.5);
+}
+
+.direction-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: background-color 0.2s;
+}
+
+.direction-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 曲一覧テーブル */
+.tracks-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background-color: rgba(30, 30, 30, 0.6);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tracks-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: white;
+}
+
+.tracks-table th {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+  color: #1db954;
+}
+
+.tracks-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}
+
+.tracks-table tr:last-child td {
+  border-bottom: none;
+}
+
+.tracks-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* アルバムアート */
+.album-art {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.album-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* トラック情報スタイル */
+.track-info-cell {
+  max-width: 300px;
+}
+
+.track-name {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.artist-name {
+  font-size: 0.9rem;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.album-name {
+  font-size: 0.8rem;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* タグリストセル */
+.tags-cell {
+  min-width: 200px;
+}
+
+/* トラックごとのタグリスト */
+.track-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.track-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: rgba(29, 185, 84, 0.2);
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #1db954;
+  transition: all 0.2s;
+}
+
+.track-tag:hover {
+  background-color: rgba(29, 185, 84, 0.3);
+}
+
+.remove-tag-btn {
+  margin-left: 0.3rem;
+  background: none;
+  border: none;
+  color: #1db954;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.remove-tag-btn:hover {
+  opacity: 1;
+}
+
+/* 新しいタグ追加エリア */
+.add-tag-cell {
+  min-width: 200px;
+}
+
+.add-tag-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-tag-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.add-tag-input:focus {
+  outline: none;
+  border-color: #1db954;
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+}
+
+.add-tag-btn {
+  padding: 0.5rem 0.75rem;
+  background-color: #1db954;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.add-tag-btn:hover {
+  background-color: #1ed760;
+}
+
+/* タグサジェストドロップダウン */
+.tag-suggestions-dropdown {
+  position: absolute;
+  background-color: #282828;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  width: max-content;
+  min-width: 150px;
+}
+
+.tag-suggestion-item {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tag-suggestion-item:hover {
+  background-color: rgba(29, 185, 84, 0.2);
+}
+
+.tag-suggestion-name {
+  color: white;
+  font-size: 0.9rem;
+}
+
+.tag-suggestion-count {
+  margin-left: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+/* アクションボタンセル */
+.actions-cell {
+  width: 100px;
+  text-align: center;
+}
+
+.play-button {
+  background: none;
+  border: 2px solid #1db954;
+  border-radius: 50%;
+  color: #1db954;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.play-button:hover {
+  background-color: #1db954;
+  color: white;
+}
+
+.play-button i {
+  font-size: 1rem;
+}
+
+/* 空の状態メッセージ */
+.empty-state {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #aaa;
+}
+
+.empty-state h3 {
+  margin-top: 0;
+  color: #1db954;
+  margin-bottom: 1rem;
+}
+
+.empty-state p {
+  max-width: 500px;
+  margin: 0 auto 1rem auto;
+}
+
+/* ページネーションコントロール */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+  gap: 0.5rem;
+}
+
+.pagination-button {
+  padding: 0.5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pagination-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-button.active {
+  background-color: #1db954;
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .tracks-table th:nth-child(3),
+  .tracks-table td:nth-child(3) {
+    display: none; /* 3列目（アルバム）を非表示 */
+  }
+  
+  .tagged-tracks-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+  }
+  
+  .track-info-cell {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 576px) {
+  .tracks-table {
+    display: block;
+  }
+  
+  .tracks-table thead {
+    display: none;
+  }
+  
+  .tracks-table tbody {
+    display: block;
+  }
+  
+  .tracks-table tr {
+    display: block;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .tracks-table td {
+    display: block;
+    border: none;
+    padding: 0.5rem 0;
+  }
+  
+  .tracks-table td:before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    margin-right: 0.5rem;
+  }
+  
+  .album-art {
+    margin: 0 auto;
+  }
+}
+
+/* ローディング状態 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 1rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #1db954;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* エラー表示 */
+.error-message {
+  background-color: rgba(255, 59, 48, 0.2);
+  border-left: 4px solid #ff3b30;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0 4px 4px 0;
+  color: #ff3b30;
+}
+
+/* 再生中の曲を強調表示 */
+.now-playing-row {
+  background-color: rgba(29, 185, 84, 0.1) !important;
+  position: relative;
+}
+
+.now-playing-row::before {
+  content: "▶";
+  position: absolute;
+  left: 0;
+  color: #1db954;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-left: 0.5rem;
+}
