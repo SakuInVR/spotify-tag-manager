@@ -17,6 +17,7 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
   const [showAllTags, setShowAllTags] = useState(false);
   const [filteredTagList, setFilteredTagList] = useState([]);
   const [compactView, setCompactView] = useState(true); // デフォルトでシンプル表示（true）に設定
+  const [searchMode, setSearchMode] = useState('AND'); // 検索モード（初期値はAND検索）
 
   // すべてのタグ付けされた曲を取得
   useEffect(() => {
@@ -127,19 +128,30 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
     }
   }, [tagSearchText, allTags]);
 
-  // 選択されたタグに基づいて曲をフィルタリング
+  // 選択されたタグに基づいて曲をフィルタリング（検索モードに応じて異なる）
   useEffect(() => {
     if (selectedTags.length === 0) {
       setFilteredTracks(tracks);
     } else {
-      const filtered = tracks.filter(track => 
-        selectedTags.every(tag => track.tags.includes(tag))
-      );
+      let filtered;
+      
+      if (searchMode === 'AND') {
+        // AND検索：すべてのタグを含む曲をフィルタリング
+        filtered = tracks.filter(track => 
+          selectedTags.every(tag => track.tags.includes(tag))
+        );
+      } else {
+        // OR検索：いずれかのタグを含む曲をフィルタリング
+        filtered = tracks.filter(track => 
+          selectedTags.some(tag => track.tags.includes(tag))
+        );
+      }
+      
       setFilteredTracks(filtered);
     }
     // 曲のフィルタリングが変わったら選択をリセット
     setSelectedTrackIds([]);
-  }, [selectedTags, tracks]);
+  }, [selectedTags, tracks, searchMode]);
 
   // 曲の選択/解除
   const toggleTrackSelection = (trackId) => {
@@ -222,6 +234,32 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
             onChange={(e) => setTagSearchText(e.target.value)}
             disabled={creating}
           />
+          
+          {/* 検索モード選択ラジオボタン */}
+          <div className="search-mode-selector">
+            <label className="search-mode-label">
+              <input
+                type="radio"
+                name="searchMode"
+                value="AND"
+                checked={searchMode === 'AND'}
+                onChange={() => setSearchMode('AND')}
+                disabled={creating}
+              />
+              <span>AND検索 (すべてのタグを含む)</span>
+            </label>
+            <label className="search-mode-label">
+              <input
+                type="radio"
+                name="searchMode"
+                value="OR"
+                checked={searchMode === 'OR'}
+                onChange={() => setSearchMode('OR')}
+                disabled={creating}
+              />
+              <span>OR検索 (いずれかのタグを含む)</span>
+            </label>
+          </div>
         </div>
         
         <div className="tags-filter">
