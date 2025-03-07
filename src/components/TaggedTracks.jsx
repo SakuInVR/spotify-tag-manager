@@ -1,66 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import './TaggedTracks.css';
 
-function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isLoggedIn }) {
-  const navigate = useNavigate();
+function TaggedTracks({ supabase, spotifyApi, supabaseUserId, isLoggedIn }) {
   const [tracks, setTracks] = useState([]);
   const [filteredTracks, setFilteredTracks] = useState([]);
+  const [tagInput, setTagInput] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showMessage, setShowMessage] = useState(false);
+  const [message, setMessage] = useState('');
+  const [expandedTrack, setExpandedTrack] = useState(null);
+  const tagInputRefs = useRef({});
+  
+  // タグフィルター用の状態
   const [allTags, setAllTags] = useState([]);
   const [tagCounts, setTagCounts] = useState({});
   const [selectedTags, setSelectedTags] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [playingTrackId, setPlayingTrackId] = useState(null);
   const [tagSearchText, setTagSearchText] = useState('');
   const [showAllTags, setShowAllTags] = useState(false);
   const [filteredTagList, setFilteredTagList] = useState([]);
-  const [compactView, setCompactView] = useState(true); // デフォルトでシンプル表示（true）に設定
-  const [searchMode, setSearchMode] = useState('AND'); // 検索モード（初期値はAND検索）
+  const [searchMode, setSearchMode] = useState('AND');
 
-  // すべてのタグ付けされた曲を取得
+  // タグ付けされた曲を取得
   useEffect(() => {
     if (!supabaseUserId || !isLoggedIn) return;
 
     const fetchTaggedTracks = async () => {
-      setLoading(true);
       try {
-        // タグ付けされた曲を取得（ユーザーIDまたはSpotifyユーザーIDで検索）
-        // 重複を避けるために、track_id, tag, user_idの組み合わせでユニークになるようにする
-        let query = supabase
+        const { data, error } = await supabase
           .from('tagged_tracks')
           .select('*')
-          .eq('user_id', supabaseUserId);
-          
-        // Spotifyユーザーが設定されている場合は、そのユーザーのデータも取得
-        if (spotifyUserId) {
-          query = supabase
-            .from('tagged_tracks')
-            .select('*')
-            .or(`user_id.eq.${supabaseUserId},spotify_user_id.eq.${spotifyUserId}`);
-        }
-        
-        const { data, error } = await query.order('added_at', { ascending: false });
+          .eq('user_id', supabaseUserId)
+          .order('added_at', { ascending: false });
 
         if (error) throw error;
 
-        console.log('Fetched tracks:', data);
-        
-        // 曲ごとにグループ化し、重複を排除
+        // 曲ごとにグループ化
         const trackMap = new Map();
-        const tagCountsObj = {};
+        const tagCountsObj = {}; // タグのカウント用オブジェクト
         const processedTags = new Set(); // 処理済みのtrack_id+tagの組み合わせを記録
 
         if (data && data.length > 0) {
           data.forEach(item => {
             const trackTagKey = `${item.track_id}-${item.tag}`;
             
-            // 同じ曲の同じタグは一度だけカウント
+            // 同じ曲の同じタグは一度だけ処理
             if (!processedTags.has(trackTagKey)) {
               processedTags.add(trackTagKey);
               // タグの使用回数をカウント
               tagCountsObj[item.tag] = (tagCountsObj[item.tag] || 0) + 1;
             }
-            
+
             if (!trackMap.has(item.track_id)) {
               trackMap.set(item.track_id, {
                 id: item.track_id,
@@ -82,36 +72,24 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
 
         // タグを使用回数順にソート
         const sortedTags = Object.keys(tagCountsObj).sort((a, b) => tagCountsObj[b] - tagCountsObj[a]);
-        
+
         const uniqueTracks = Array.from(trackMap.values());
-        console.log('Unique tracks:', uniqueTracks);
-        console.log('Tag counts:', tagCountsObj);
         
         setTracks(uniqueTracks);
         setFilteredTracks(uniqueTracks);
         setAllTags(sortedTags);
         setTagCounts(tagCountsObj);
+        setFilteredTagList(sortedTags);
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching tagged tracks:', err);
-        setError('タグ付けされた曲の取得中にエラーが発生しました。');
+        console.error('Error fetching tracks:', err);
+        setError('曲の取得中にエラーが発生しました');
         setLoading(false);
       }
     };
 
     fetchTaggedTracks();
-  }, [supabase, supabaseUserId, spotifyUserId]);
-
-  // タグを選択/解除
-  const toggleTag = (tag) => {
-    setSelectedTags(prevTags => {
-      if (prevTags.includes(tag)) {
-        return prevTags.filter(t => t !== tag);
-      } else {
-        return [...prevTags, tag];
-      }
-    });
-  };
+  }, [supabase, supabaseUserId, isLoggedIn]);
 
   // タグ検索テキストが変更されたときにタグリストをフィルタリング
   useEffect(() => {
@@ -127,7 +105,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
     }
   }, [tagSearchText, allTags]);
 
-  // 選択されたタグに基づいて曲をフィルタリング（検索モードに応じて異なる）
+  // 選択されたタグに基づいて曲をフィルタリング
   useEffect(() => {
     if (selectedTags.length === 0) {
       setFilteredTracks(tracks);
@@ -150,111 +128,141 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
     }
   }, [selectedTags, tracks, searchMode]);
 
-  // 曲を再生してNowPlayingページに遷移
-  const playTrack = async (trackId) => {
-    try {
-      setPlayingTrackId(trackId);
-      
-      try {
-        // Spotifyで曲を再生
-        await spotifyApi.play({
-          uris: [`spotify:track:${trackId}`]
-        });
-        
-        // 少し待ってからNowPlayingページに遷移（曲の再生が始まるのを待つ）
-        setTimeout(() => {
-          navigate('/now-playing');
-        }, 500);
-      } catch (playError) {
-        console.error('Error playing track:', playError);
-        
-        // 再生エラーが発生しても、NowPlayingページに遷移
-        if (playError.status === 401) {
-          setError('Spotify Premiumアカウントが必要です。または再認証が必要です。');
-          // 再認証のためにログアウト
-          localStorage.removeItem('spotify_access_token');
-          window.location.reload();
-        } else {
-          setError('曲の再生中にエラーが発生しましたが、NowPlayingページに遷移します。');
-          // エラーが発生しても、NowPlayingページに遷移
-          navigate('/now-playing');
-        }
+  // タグを選択/解除
+  const toggleTag = (tag) => {
+    setSelectedTags(prevTags => {
+      if (prevTags.includes(tag)) {
+        return prevTags.filter(t => t !== tag);
+      } else {
+        return [...prevTags, tag];
       }
-    } catch (error) {
-      console.error('General error:', error);
-      setError('予期せぬエラーが発生しました。');
-      setPlayingTrackId(null);
-    }
+    });
   };
 
-  const removeTag = async (trackId, tag) => {
+  // タグを追加
+  const addTag = async (trackId) => {
+    const tag = tagInput[trackId]?.trim();
+    if (!tag) return;
+
     try {
+      const track = tracks.find(t => t.id === trackId);
+      if (!track) return;
+
       const { data, error } = await supabase
         .from('tagged_tracks')
-        .delete()
-        .eq('track_id', trackId)
-        .eq('tag', tag)
-        .eq('user_id', supabaseUserId);
+        .insert([
+          {
+            user_id: supabaseUserId,
+            track_id: trackId,
+            track_name: track.name,
+            artist_name: track.artist,
+            album_name: track.album,
+            album_image: track.image,
+            tag: tag,
+            added_at: new Date().toISOString()
+          }
+        ]);
 
       if (error) throw error;
 
-      // タグを削除した後、再度データを取得
-      const updatedTracks = tracks.map(track => {
-        if (track.id === trackId) {
+      // 新しいタグを追加
+      setTracks(tracks.map(t => {
+        if (t.id === trackId) {
           return {
-            ...track,
-            tags: track.tags.filter(t => t !== tag)
+            ...t,
+            tags: [...t.tags, tag]
           };
         }
-        return track;
-      }).filter(track => track.tags.length > 0); // タグが空のトラックを除外
+        return t;
+      }));
 
-      setTracks(updatedTracks);
-      setFilteredTracks(updatedTracks);
-    } catch (err) {
-      console.error('Error removing tag:', err);
-      setError('タグの削除中にエラーが発生しました。');
-    }
-  };
+      // 入力をクリア
+      setTagInput(prev => ({
+        ...prev,
+        [trackId]: ''
+      }));
 
-  const addTag = async (trackId, tag) => {
-    try {
-      const { data, error } = await supabase
-        .from('tagged_tracks')
-        .insert([{
-          track_id: trackId,
-          tag: tag,
-          user_id: supabaseUserId,
-          added_at: new Date()
-        }]);
-
-      if (error) throw error;
-
-      // タグを追加した後、再度データを取得
-      const updatedTracks = tracks.map(track => {
-        if (track.id === trackId) {
-          return {
-            ...track,
-            tags: [...track.tags, tag]
-          };
-        }
-        return track;
-      });
-
-      setTracks(updatedTracks);
-      setFilteredTracks(updatedTracks);
+      // メッセージを表示
+      setMessage('タグを追加しました');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 3000);
     } catch (err) {
       console.error('Error adding tag:', err);
-      setError('タグの追加中にエラーが発生しました。');
+      setError('タグの追加中にエラーが発生しました');
     }
+  };
+
+  // タグを削除
+  const removeTag = async (trackId, tagToRemove) => {
+    try {
+      const { error } = await supabase
+        .from('tagged_tracks')
+        .delete()
+        .match({
+          user_id: supabaseUserId,
+          track_id: trackId,
+          tag: tagToRemove
+        });
+
+      if (error) throw error;
+
+      // タグを削除
+      setTracks(tracks.map(t => {
+        if (t.id === trackId) {
+          return {
+            ...t,
+            tags: t.tags.filter(tag => tag !== tagToRemove)
+          };
+        }
+        return t;
+      }));
+
+      // メッセージを表示
+      setMessage('タグを削除しました');
+      setShowMessage(true);
+      setTimeout(() => setShowMessage(false), 3000);
+    } catch (err) {
+      console.error('Error removing tag:', err);
+      setError('タグの削除中にエラーが発生しました');
+    }
+  };
+
+  // Spotifyで再生
+  const playTrack = async (trackId) => {
+    try {
+      await spotifyApi.play({
+        uris: [`spotify:track:${trackId}`]
+      });
+    } catch (err) {
+      console.error('Error playing track:', err);
+      setError('再生中にエラーが発生しました');
+    }
+  };
+
+  // SpotifyのWeb版を開く
+  const openSpotifyWeb = (trackId) => {
+    window.open(`https://open.spotify.com/track/${trackId}`, '_blank');
+  };
+
+  const handleKeyPress = (e, trackId) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag(trackId);
+    }
+  };
+
+  // トラックの詳細表示を切り替え
+  const toggleTrackExpansion = (trackId) => {
+    setExpandedTrack(expandedTrack === trackId ? null : trackId);
   };
 
   return (
     <div className="tagged-tracks-container">
-      <h2>タグ付けされた曲</h2>
+      <h2>タグ付けした曲</h2>
       
       {error && <div className="error-message">{error}</div>}
-      
+      {showMessage && <div className="success-message">{message}</div>}
+
       <div className="filter-section">
         <h3>タグで絞り込む</h3>
         <p className="tags-filter-help">タグは使用頻度順に表示されています。</p>
@@ -266,6 +274,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
             placeholder="タグを検索..."
             value={tagSearchText}
             onChange={(e) => setTagSearchText(e.target.value)}
+            disabled={loading}
           />
           
           {/* 検索モード選択ラジオボタン */}
@@ -277,6 +286,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
                 value="AND"
                 checked={searchMode === 'AND'}
                 onChange={() => setSearchMode('AND')}
+                disabled={loading}
               />
               <span>AND検索 (すべてのタグを含む)</span>
             </label>
@@ -287,6 +297,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
                 value="OR"
                 checked={searchMode === 'OR'}
                 onChange={() => setSearchMode('OR')}
+                disabled={loading}
               />
               <span>OR検索 (いずれかのタグを含む)</span>
             </label>
@@ -299,6 +310,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
               key={tag}
               className={`tag-filter ${selectedTags.includes(tag) ? 'selected' : ''}`}
               onClick={() => toggleTag(tag)}
+              disabled={loading}
             >
               <span className="tag-filter-name">{tag}</span>
               <span className="tag-filter-count">{tagCounts[tag]}回</span>
@@ -310,6 +322,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
           <button 
             className="show-more-tags"
             onClick={() => setShowAllTags(true)}
+            disabled={loading}
           >
             もっと見る ({filteredTagList.length - 20} タグ)
           </button>
@@ -319,6 +332,7 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
           <button 
             className="show-less-tags"
             onClick={() => setShowAllTags(false)}
+            disabled={loading}
           >
             表示を減らす
           </button>
@@ -328,158 +342,121 @@ function TaggedTracks({ supabase, spotifyApi, spotifyUserId, supabaseUserId, isL
           <button 
             className="clear-filters"
             onClick={() => setSelectedTags([])}
+            disabled={loading}
           >
             フィルターをクリア
           </button>
         )}
       </div>
       
-      <div className="tracks-count-container">
-        <div className="tracks-count">
-          {filteredTracks.length} 曲が見つかりました
-        </div>
-        <button 
-          className={`view-toggle-button ${compactView ? 'compact-active' : ''}`}
-          onClick={() => setCompactView(!compactView)}
-        >
-          {compactView ? '詳細表示' : 'シンプル表示'}
-        </button>
-      </div>
-      
       {loading ? (
         <div className="loading">読み込み中...</div>
+      ) : filteredTracks.length === 0 ? (
+        <div className="no-tracks">
+          {tracks.length === 0 ? (
+            <>
+              <p>タグ付けされた曲はありません</p>
+              <p>Now Playingページから曲にタグを付けることができます</p>
+            </>
+          ) : (
+            <p>選択したタグに一致する曲はありません。</p>
+          )}
+        </div>
       ) : (
-        <TracksList 
-          tracks={filteredTracks} 
-          selectedTags={selectedTags} 
-          onPlayTrack={playTrack} 
-          onRemoveTag={removeTag} 
-          onAddTag={addTag} 
-          allTags={allTags} 
-        />
-      )}
-    </div>
-  );
-}
-
-const TracksList = ({ tracks, selectedTags, onPlayTrack, onRemoveTag, onAddTag, allTags }) => {
-  return (
-    <div className="tracks-list">
-      {tracks.map(track => (
-        <div key={track.id} className="track-card">
-          <div className="track-info">
-            <div className="track-info-main">
+        <div className="tracks-list">
+          {filteredTracks.map(track => (
+            <div 
+              key={track.id} 
+              className={`track-card ${expandedTrack === track.id ? 'expanded' : ''}`}
+              onClick={() => toggleTrackExpansion(track.id)}
+            >
               <div className="track-header">
-                <h3>{track.name}</h3>
-                <button
-                  className="play-button"
-                  onClick={() => onPlayTrack(track.id)}
-                  title="この曲を再生"
-                >
-                  ▶
-                </button>
-              </div>
-              <p className="artist">{track.artist}</p>
-            </div>
-            
-            {/* タグエリア */}
-            <div className="track-tags-area">
-              <div className="track-tags">
-                {track.tags.map((tag, index) => (
-                  <span 
-                    key={index} 
-                    className={`tag ${selectedTags.includes(tag) ? 'selected' : ''}`}
+                <div className="track-info">
+                  <div className="album-cover">
+                    <img src={track.image} alt={`${track.album} album cover`} />
+                  </div>
+                  <div className="track-details">
+                    <h3>{track.name}</h3>
+                    <p className="artist">{track.artist}</p>
+                    <p className="album">{track.album}</p>
+                  </div>
+                </div>
+                
+                <div className="track-controls">
+                  <button
+                    className="play-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playTrack(track.id);
+                    }}
+                    title="Spotifyで再生"
                   >
-                    {tag}
+                    ▶
+                  </button>
+                  <button
+                    className="spotify-web-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openSpotifyWeb(track.id);
+                    }}
+                    title="Spotify Webで開く"
+                  >
+                    🌐
+                  </button>
+                </div>
+              </div>
+
+              <div className="track-content">
+                <div className="tags-section">
+                  <div className="current-tags">
+                    {track.tags.map((tag, index) => (
+                      <span key={index} className="tag">
+                        {tag}
+                        <button
+                          className="remove-tag"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeTag(track.id, tag);
+                          }}
+                          title="タグを削除"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className="add-tag-form" onClick={e => e.stopPropagation()}>
+                    <input
+                      type="text"
+                      ref={el => tagInputRefs.current[track.id] = el}
+                      value={tagInput[track.id] || ''}
+                      onChange={e => setTagInput(prev => ({
+                        ...prev,
+                        [track.id]: e.target.value
+                      }))}
+                      onKeyPress={e => handleKeyPress(e, track.id)}
+                      placeholder="新しいタグを追加 (Enterで確定)"
+                      className="tag-input"
+                    />
                     <button
-                      className="remove-tag-button"
+                      className="add-tag-button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onRemoveTag(track.id, tag);
+                        addTag(track.id);
                       }}
-                      title="タグを削除"
                     >
-                      ×
+                      追加
                     </button>
-                  </span>
-                ))}
+                  </div>
+                </div>
               </div>
-              
-              {/* タグ追加フォーム - 常に表示 */}
-              <AddTagForm 
-                onAddTag={(tag) => onAddTag(track.id, tag)}
-                allTags={allTags}
-                existingTags={track.tags}
-              />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// タグ追加フォームコンポーネント
-const AddTagForm = ({ onAddTag, allTags, existingTags }) => {
-  const [newTag, setNewTag] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const inputRef = useRef(null);
-
-  // 既存のタグを除外したサジェスト候補を生成
-  const suggestedTags = allTags
-    .filter(tag => 
-      tag.toLowerCase().includes(newTag.toLowerCase()) &&
-      !existingTags.includes(tag)
-    )
-    .slice(0, 5);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (newTag.trim()) {
-      onAddTag(newTag.trim());
-      setNewTag('');
-      inputRef.current?.focus();
-    }
-  };
-
-  return (
-    <div className="add-tag-form">
-      <form onSubmit={handleSubmit}>
-        <input
-          ref={inputRef}
-          type="text"
-          value={newTag}
-          onChange={(e) => {
-            setNewTag(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => setShowSuggestions(true)}
-          placeholder="新しいタグを追加"
-        />
-        <button type="submit">追加</button>
-      </form>
-      
-      {showSuggestions && newTag && (
-        <div className="tag-suggestions">
-          {suggestedTags.map((tag, index) => (
-            <div 
-              key={index}
-              className="suggested-tag"
-              onClick={() => {
-                onAddTag(tag);
-                setNewTag('');
-                setShowSuggestions(false);
-                inputRef.current?.focus();
-              }}
-            >
-              <span className="tag-name">{tag}</span>
-              <span className="tag-count">({tagCounts[tag]}回使用)</span>
             </div>
           ))}
         </div>
       )}
     </div>
   );
-};
+}
 
 export default TaggedTracks;
