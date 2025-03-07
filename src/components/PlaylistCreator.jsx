@@ -106,13 +106,31 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
   // タグを選択/解除
   const toggleTag = (tag) => {
     setSelectedTags(prevTags => {
-      if (prevTags.includes(tag)) {
-        return prevTags.filter(t => t !== tag);
+      const newTags = prevTags.includes(tag)
+        ? prevTags.filter(t => t !== tag)
+        : [...prevTags, tag];
+      
+      // プレイリスト名を自動生成
+      if (newTags.length > 0) {
+        const tagPart = newTags.join(searchMode === 'AND' ? ' + ' : ' | ');
+        const searchModePart = searchMode === 'AND' ? ' (AND)' : ' (OR)';
+        setPlaylistName(tagPart + searchModePart);
       } else {
-        return [...prevTags, tag];
+        setPlaylistName('');
       }
+      
+      return newTags;
     });
   };
+
+  // 検索モードが変更されたときにもプレイリスト名を更新
+  useEffect(() => {
+    if (selectedTags.length > 0) {
+      const tagPart = selectedTags.join(searchMode === 'AND' ? ' + ' : ' | ');
+      const searchModePart = searchMode === 'AND' ? ' (AND)' : ' (OR)';
+      setPlaylistName(tagPart + searchModePart);
+    }
+  }, [searchMode, selectedTags]);
 
   // タグ検索テキストが変更されたときにタグリストをフィルタリング
   useEffect(() => {
@@ -152,6 +170,17 @@ function PlaylistCreator({ spotifyApi, supabase, spotifyUserId, supabaseUserId, 
     // 曲のフィルタリングが変わったら選択をリセット
     setSelectedTrackIds([]);
   }, [selectedTags, tracks, searchMode]);
+
+  // タグが選択されたときに自動的にプレイリスト名を更新
+  useEffect(() => {
+    if (selectedTags.length > 0) {
+      const searchModeText = searchMode === 'AND' ? 'すべて含む' : 'いずれかを含む';
+      const tagsText = selectedTags.join(' + ');
+      setPlaylistName(`${tagsText} (${searchModeText})`);
+    } else {
+      setPlaylistName('');
+    }
+  }, [selectedTags, searchMode]);
 
   // 曲の選択/解除
   const toggleTrackSelection = (trackId) => {
