@@ -1,0 +1,149 @@
+.playlist-creator-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.filter-section {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.filter-title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-title-container h3 {
+  margin: 0;
+}
+
+.filter-title-container .show-more-tags {
+  margin-left: 1rem;
+  background: none;
+  border: none;
+  color: #1DB954;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.filter-title-container .show-more-tags:hover {
+  text-decoration: underline;
+}
+
+.show-more-tags {
+  background: none;
+  border: none;
+  color: #1DB954;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.show-more-tags:hover {
+  text-decoration: underline;
+}
+
+.show-more-tags:disabled {
+  color: #666;
+  cursor: not-allowed;
+}
+
+.show-more-inline {
+  background: none;
+  border: none;
+  color: #1DB954;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.show-more-inline:hover {
+  text-decoration: underline;
+}
+
+.tags-filter-help {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* その他の既存のスタイル */
+.tag-search-container {
+  margin-bottom: 1rem;
+}
+
+.tag-search-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.search-mode-selector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.search-mode-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tags-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tag-filter {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-filter.selected {
+  background: #1DB954;
+  color: white;
+  border-color: #1DB954;
+}
+
+.tag-filter-name {
+  font-weight: 500;
+}
+
+.tag-filter-count {
+  font-size: 0.8rem;
+  color: #666;
+  background: #f0f0f0;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.tag-filter.selected .tag-filter-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* 残りの既存のスタイル... */

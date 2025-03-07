@@ -4,6 +4,57 @@ import { Link } from 'react-router-dom';
 function Home() {
   return (
     <div className="home-container">
+      <div className="spotify-web-guide">
+        <h2 id="whiten">👋 はじめに：音楽を再生しよう！</h2>
+        <div className="guide-main">
+          <p className="guide-intro" id="whiten">
+            このアプリを使うには
+            <a href="https://open.spotify.com/" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="spotify-link"
+            >
+              Spotify Web Player
+            </a>
+            で音楽を再生する必要があります。<br /><br />
+          </p>
+        </div>
+
+        <div className="guide-steps">
+          <h3>📝 使い方</h3>
+          <ol>
+            <li>
+              <span className="step-number">1.</span>
+              <a href="https://open.spotify.com/" 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 className="spotify-link"
+              >
+                Spotify Web Player
+              </a>
+              を新しいタブで開く
+            </li>
+            <li>
+              <span className="step-number">2.</span>
+              好きな曲やプレイリストを再生する
+            </li>
+            <li>
+              <span className="step-number">3.</span>
+              このアプリに戻ってきて、再生中の曲にタグを付ける<br /><br />
+            </li>
+          </ol>
+        </div>
+
+        <div className="guide-tips">
+          <h3>💡 おすすめの使い方</h3>
+          <ul>
+            <li>ブラウザの画面を分割して、Spotifyとこのアプリを同時に表示させると便利です</li>
+            <li>お気に入りの曲を再生しながら、ジャンルや気分に合わせてタグを付けていきましょう</li>
+            <li>タグ付けした曲は後からプレイリストにまとめることができます</li>
+          </ul>
+        </div>
+      </div>
+
       <div className="features">
         <div className="feature">
           <div className="feature-icon">🎵</div>
