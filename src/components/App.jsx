@@ -7,7 +7,11 @@ function App() {
         <header className="App-header">
           <h1>Spotify Tag Manager</h1>
           {!isLoggedIn ? (
-            <button onClick={login} className="login-button">Login with Spotify</button>
+            <nav>
+              <button className="login-button" onClick={login}>
+                Spotifyでログイン
+              </button>
+            </nav>
           ) : (
             <nav>
               <ul className="nav-links">
@@ -89,7 +93,13 @@ function App() {
                 />
               </Routes>
             ) : (
-              // ...existing code...
+              <div className="welcome-message">
+                <h1>Welcome to Spotify Tag Manager</h1>
+                <p>Spotifyで再生中の楽曲にタグを付けて、効率的に音楽を管理しましょう</p>
+                <button className="login-button" onClick={login}>
+                  Spotifyでログイン
+                </button>
+              </div>
             )}
           </main>
         </div>

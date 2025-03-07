@@ -4,13 +4,6 @@ import { Link } from 'react-router-dom';
 function Home() {
   return (
     <div className="home-container">
-      <div className="home-header">
-        <h1>Spotify Tag Manager</h1>
-        <p className="home-description">
-          Spotifyで再生中の楽曲にタグを付けて、効率的に音楽を管理しましょう
-        </p>
-      </div>
-      
       <div className="features">
         <div className="feature">
           <div className="feature-icon">🎵</div>

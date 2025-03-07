@@ -9,6 +9,9 @@
   --hover-color: #282828;
   --error-color: #E74C3C;
   --success-color: #2ECC71;
+  --notice-bg: rgba(29, 185, 84, 0.15);
+  --notice-border: #1DB954;
+  --notice-text: #FFFFFF;
 }
 
 * {
@@ -28,6 +31,76 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* 開発中の通知 */
+.development-notice {
+  background-color: var(--card-background);
+  border: 1px solid var(--notice-border);
+  border-left: 4px solid var(--notice-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.development-notice h2 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.development-notice p {
+  color: var(--text-color);
+  margin-bottom: 1rem;
+}
+
+.account-instructions {
+  background-color: var(--hover-color);
+  border-radius: 6px;
+  padding: 1.2rem;
+  margin-top: 1rem;
+}
+
+.account-instructions h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.8rem;
+}
+
+.account-instructions ul {
+  list-style-type: none;
+  padding-left: 1rem;
+  margin: 0.8rem 0;
+}
+
+.account-instructions li {
+  margin: 0.5rem 0;
+  position: relative;
+  padding-left: 1.2rem;
+  color: var(--text-color);
+}
+
+.account-instructions li:before {
+  content: "•";
+  color: var(--primary-color);
+  position: absolute;
+  left: 0;
+}
+
+.contact-link {
+  display: inline-block;
+  background-color: var(--primary-color);
+  color: white;
+  text-decoration: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  margin-top: 1rem;
+  transition: background-color 0.2s;
+}
+
+.contact-link:hover {
+  background-color: var(--primary-dark);
 }
 
 /* ヘッダースタイル */

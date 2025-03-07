@@ -262,6 +262,27 @@ function App() {
                     <li>Spotify Premiumアカウントをお持ちの場合は、アプリ内から直接曲を再生できます</li>
                   </ol>
                 </div>
+                <div className="development-notice">
+                  <h2>⚠️ 開発中のお知らせ ⚠️</h2>
+                  <p>このサービスは現在開発中のベータ版です。予告なく機能の変更や運用の停止が行われる可能性があります。</p>
+                  <div className="account-instructions">
+                    <h3>サービスの利用方法</h3>
+                    <p>以下の情報を管理者に送信してください：</p>
+                    <ul>
+                      <li>Spotifyアカウント名</li>
+                      <li>Spotifyアカウントのメールアドレス</li>
+                    </ul>
+                    <p>管理者の確認後、サービスをご利用いただけます。</p>
+                    <a 
+                      href="https://forms.gle/oucFCJaaxi87pDcb6" 
+                      className="contact-link" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      管理者に連絡する (Googleフォーム)
+                    </a>
+                  </div>
+                </div>
               </div>
             )}
           </main>
