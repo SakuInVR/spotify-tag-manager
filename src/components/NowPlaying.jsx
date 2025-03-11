@@ -476,6 +476,14 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
     }
   };
 
+  // 歌詞へのURLを生成する関数を追加
+  const getLyricsUrl = (track) => {
+    if (!track) return '#';
+    const artistName = encodeURIComponent(track.artists[0].name);
+    const trackName = encodeURIComponent(track.name);
+    return `https://genius.com/search?q=${artistName}${encodeURIComponent(' ')}${trackName}`;
+  };
+
   return (
     <div className={`now-playing-container ${isSidebar ? 'sidebar-mode' : ''}`}>
       <h2>再生中の曲</h2>
@@ -513,7 +521,21 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
                 </div>
                 
                 <div className="sidebar-track-info">
-                  <h3 className="sidebar-track-name">{currentTrack.name}</h3>
+                  <div className="track-title-container">
+                    <h3 className="sidebar-track-name">{currentTrack.name}</h3>
+                    <a 
+                      href={getLyricsUrl(currentTrack)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="lyrics-button"
+                      title="歌詞を検索"
+                    >
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                        <path d="M14.5 11h-5c-.28 0-.5.22-.5.5s.22.5.5.5h5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5zm-3-2h3c.28 0 .5-.22.5-.5s-.22-.5-.5-.5h-3c-.28 0-.5.22-.5.5s.22.5.5.5zm6 5H7v-1h10.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H7v-5h10.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H6.5c-.28 0-.5.22-.5.5v7c0 .28.22.5.5.5h11c.28 0 .5-.22.5-.5s-.22-.5-.5-.5z"/>
+                      </svg>
+                      歌詞
+                    </a>
+                  </div>
                   <p className="sidebar-artist">{currentTrack.artists.map(a => a.name).join(', ')}</p>
                 </div>
               </div>
@@ -714,7 +736,21 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
               </div>
               
               <div className="track-details">
-                <h3>{currentTrack.name}</h3>
+                <div className="track-title-container">
+                  <h3>{currentTrack.name}</h3>
+                  <a 
+                    href={getLyricsUrl(currentTrack)} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="lyrics-button"
+                    title="歌詞を検索"
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                      <path d="M14.5 11h-5c-.28 0-.5.22-.5.5s.22.5.5.5h5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5zm-3-2h3c.28 0 .5-.22.5-.5s-.22-.5-.5-.5h-3c-.28 0-.5.22-.5.5s.22.5.5.5zm6 5H7v-1h10.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H7v-5h10.5c.28 0 .5-.22.5-.5s-.22-.5-.5-.5H6.5c-.28 0-.5.22-.5.5v7c0 .28.22.5.5.5h11c.28 0 .5-.22.5-.5s-.22-.5-.5-.5z"/>
+                    </svg>
+                    歌詞
+                  </a>
+                </div>
                 <p className="artist">{currentTrack.artists.map(a => a.name).join(', ')}</p>
                 <p className="album">{currentTrack.album.name}</p>
                 

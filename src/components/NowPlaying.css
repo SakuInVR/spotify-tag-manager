@@ -25,6 +25,8 @@
 
 .track-details {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .track-details h3 {
@@ -37,6 +39,43 @@
   margin: 0;
   color: #666;
   margin-bottom: 0.5rem;
+}
+
+.track-title-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.track-title-container h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.lyrics-button {
+  background: #1DB954;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  margin-left: 8px;
+}
+
+.lyrics-button:hover {
+  background: #1ed760;
+}
+
+.lyrics-button svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* プログレスバー */
@@ -202,4 +241,10 @@
 .sidebar-mode .more-tags {
   background: rgba(255, 255, 255, 0.1);
   color: #a0a0a0;
+}
+
+.sidebar-mode .lyrics-button {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  margin-left: 6px;
 }
