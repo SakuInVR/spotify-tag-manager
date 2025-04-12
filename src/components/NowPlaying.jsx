@@ -191,9 +191,15 @@ function NowPlaying({ spotifyApi, supabase, spotifyUserId, supabaseUserId, isSid
     
     console.log('Adding default tags for track:', track.name);
 
-    const today = new Date();
-    const dateString = today.toISOString().split('T')[0];
-    
+    const getJSTDateString = () => {
+      const now = new Date();
+      const jstOffset = 9 * 60 * 60 * 1000; // JSTはUTC+9時間
+      const jstTime = new Date(now.getTime() + jstOffset);
+      return jstTime.toISOString().split('T')[0];
+    };
+
+    const dateString = getJSTDateString();
+
     const systemDefaultTags = [
       track.name,                          // 曲名
       ...track.artists.map(a => a.name),   // アーティスト名（複数の場合あり）
